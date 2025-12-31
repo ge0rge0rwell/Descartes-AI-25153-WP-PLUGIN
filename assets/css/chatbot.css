@@ -1,11 +1,11 @@
 /* AI Chatbot Widget Styles */
 :root {
-    --chatbot-primary: #6366f1;
-    --chatbot-primary-hover: #4f46e5;
+    --chatbot-primary: #B91C1C;
+    --chatbot-primary-hover: #991B1B;
     --chatbot-bg: #ffffff;
     --chatbot-text: #1f2937;
     --chatbot-border: #e5e7eb;
-    --chatbot-message-user-bg: #6366f1;
+    --chatbot-message-user-bg: #B91C1C;
     --chatbot-message-bot-bg: #f3f4f6;
     --chatbot-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }

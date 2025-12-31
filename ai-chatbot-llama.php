@@ -66,7 +66,7 @@ function ai_chatbot_llama_activate()
     add_option('ai_chatbot_llama_max_tokens', '500');
     add_option('ai_chatbot_llama_system_prompt', 'You are a helpful AI assistant. Provide clear, concise, and accurate responses.');
     add_option('ai_chatbot_llama_chat_position', 'bottom-right');
-    add_option('ai_chatbot_llama_primary_color', '#6366f1');
+    add_option('ai_chatbot_llama_primary_color', '#B91C1C');
     add_option('ai_chatbot_llama_enabled', '1');
 
     // Google Gemini options (only provider)
