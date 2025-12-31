@@ -54,7 +54,7 @@ app.use('/api', createProxyMiddleware({
     target: OLLAMA_HOST,
     changeOrigin: true,
     pathRewrite: {
-        '^/api': '/api', // keep path same
+        '^/': '/api/', // Add /api back because Express strips it
     },
     onProxyReq: (proxyReq, req, res) => {
         // Optional: Modify headers if needed
