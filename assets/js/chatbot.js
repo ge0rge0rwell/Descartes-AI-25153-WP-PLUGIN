@@ -73,9 +73,7 @@
             this.isProcessing = true;
 
             try {
-                const response = await this.sendMessage(message);
-                this.hideTyping();
-                this.addMessage(response, 'bot');
+                await this.streamMessage(message);
             } catch (error) {
                 this.hideTyping();
                 this.addMessage('Sorry, I encountered an error. Please try again.', 'bot');
@@ -85,104 +83,80 @@
             }
         }
 
-        addMessage(text, type) {
-            const isUser = type === 'user';
-            const avatar = this.getAvatarSVG(isUser);
-            const timestamp = this.formatTimestamp(new Date());
-
-            // Parse markdown for bot messages, escape HTML for user messages
-            let content;
-            if (isUser) {
-                content = `<p>${this.escapeHtml(text)}</p>`;
-            } else {
-                content = this.parseMarkdown(text);
-            }
-
-            // Add copy button for bot messages
-            const copyButton = !isUser ? `
-                <button class="ai-chatbot-copy-btn" aria-label="Copy message" title="Copy to clipboard">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                    </svg>
-                </button>
-            ` : '';
-
-            const messageHtml = `
-                <div class="ai-chatbot-message ai-chatbot-message-${type}">
-                    <div class="ai-chatbot-message-avatar">
-                        ${avatar}
-                    </div>
-                    <div class="ai-chatbot-message-content">
-                        ${content}
-                        <div class="ai-chatbot-message-footer">
-                            <span class="ai-chatbot-timestamp">${timestamp}</span>
-                            ${copyButton}
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            this.messages.append(messageHtml);
-
-            // Apply syntax highlighting to code blocks
-            if (!isUser) {
-                this.messages.find('pre code').each(function () {
-                    if (typeof hljs !== 'undefined') {
-                        hljs.highlightElement(this);
-                    }
-                });
-
-                // Add copy button event listener
-                this.messages.find('.ai-chatbot-copy-btn').last().on('click', (e) => {
-                    this.copyMessage(e.currentTarget);
-                });
-            }
-
-            this.scrollToBottom();
-        }
-
-        showTyping() {
-            const avatar = this.getAvatarSVG(false);
-            const typingHtml = `
-                <div class="ai-chatbot-message ai-chatbot-message-bot ai-chatbot-typing-message">
-                    <div class="ai-chatbot-message-avatar">
-                        ${avatar}
-                    </div>
-                    <div class="ai-chatbot-message-content">
-                        <div class="ai-chatbot-typing">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            this.messages.append(typingHtml);
-            this.scrollToBottom();
-        }
-
-        hideTyping() {
-            this.messages.find('.ai-chatbot-typing-message').remove();
-        }
-
-        async sendMessage(message) {
-            const response = await $.ajax({
-                url: aiChatbotLlama.ajaxUrl,
-                type: 'POST',
-                data: {
-                    action: 'ai_chatbot_send_message',
-                    nonce: aiChatbotLlama.nonce,
-                    message: message
-                }
+        async streamMessage(message) {
+            const response = await fetch(aiChatbotLlama.restUrl + 'chat-stream', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': aiChatbotLlama.nonce
+                },
+                body: JSON.stringify({ message: message })
             });
 
-            if (response.success) {
-                return response.data.response;
-            } else {
-                throw new Error(response.data.message || 'Unknown error');
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Network error');
             }
+
+            if (!response.body) return;
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText = '';
+            let isFirstChunk = true;
+            let $messageContent = null;
+
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) break;
+
+                // On first chunk, remove typing and create bot message container
+                if (isFirstChunk) {
+                    this.hideTyping();
+                    const $msg = this.addMessage('', 'bot');
+                    $messageContent = $msg.find('.ai-chatbot-message-content > p:first-child');
+                    // If markdown is used, it might be inside a p tag or direct. 
+                    // Let's rely on updateMessageContent helper usually, but here we can manually update.
+                    // addMessage returns jQuery object now (we need to modify addMessage to return it)
+                    isFirstChunk = false;
+                }
+
+                const chunk = decoder.decode(value, { stream: true });
+                fullText += chunk;
+
+                // Update message content with parsed markdown
+                // Note: addMessage creates initial structure. We need to target the content div.
+                // Re-parsing markdown on every chunk
+                const html = this.parseMarkdown(fullText);
+
+                // We need to locate the specific message content div safely
+                if ($messageContent && $messageContent.length) {
+                    // If parseMarkdown returns a <p> wrapper, we might be nesting <p> in <p> if we selected p:first-child
+                    // Let's adjust target.
+                    $messageContent.parent().html(html + this.getMessageFooterHtml());
+                } else {
+                    // Fallback if structure changes (safeguard)
+                    const $lastMsg = this.messages.find('.ai-chatbot-message-bot').last();
+                    $lastMsg.find('.ai-chatbot-message-content').html(html + this.getMessageFooterHtml());
+                }
+
+                this.scrollToBottom();
+            }
+        }
+
+        getMessageFooterHtml() {
+            const timestamp = this.formatTimestamp(new Date());
+            return `
+                    <div class="ai-chatbot-message-footer">
+                        <span class="ai-chatbot-timestamp">${timestamp}</span>
+                        <button class="ai-chatbot-copy-btn" aria-label="Copy message" title="Copy to clipboard">
+                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
+                        </button>
+                    </div>`;
         }
 
         scrollToBottom() {
