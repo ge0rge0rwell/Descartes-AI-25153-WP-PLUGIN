@@ -1,0 +1,25 @@
+{
+  "name": "local-llama-server",
+  "version": "1.0.0",
+  "description": "Expose local Ollama to the internet for WordPress Plugin integration",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "llama",
+    "ollama",
+    "tunnel",
+    "wordpress"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "chalk": "^4.1.2",
+    "cloudflared": "^0.7.1",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^3.0.5"
+  }
+}
