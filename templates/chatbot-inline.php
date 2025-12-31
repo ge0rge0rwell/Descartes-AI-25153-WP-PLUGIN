@@ -13,7 +13,7 @@
                 </svg>
             </div>
             <div>
-                <h3 class="ai-chatbot-title">AI Assistant</h3>
+                <h3 class="ai-chatbot-title">Descartes AI</h3>
                 <p class="ai-chatbot-status">
                     <span class="ai-chatbot-status-dot"></span>
                     Online
@@ -34,7 +34,7 @@
                 </svg>
             </div>
             <div class="ai-chatbot-message-content">
-                <p>Hello! I'm your AI assistant powered by Llama. How can I help you today?</p>
+                <p>Hello! I'm Descartes AI. How can I help you today?</p>
             </div>
         </div>
     </div>

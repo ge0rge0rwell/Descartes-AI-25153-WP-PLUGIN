@@ -73,6 +73,12 @@ class AI_Chatbot_Llama_API
         $temperature = floatval(get_option('ai_chatbot_llama_temperature', '0.7'));
         $system_prompt = get_option('ai_chatbot_llama_system_prompt', 'You are a helpful AI assistant.');
 
+        // Add Knowledge Base Context
+        $context = get_option('ai_chatbot_llama_context', '');
+        if (!empty($context)) {
+            $system_prompt .= "\n\nCONTEXT information:\n" . $context;
+        }
+
         // Build messages array with history
         $messages = array();
 
@@ -157,6 +163,12 @@ class AI_Chatbot_Llama_API
         $temperature = floatval(get_option('ai_chatbot_llama_temperature', '0.7'));
         $system_prompt = get_option('ai_chatbot_llama_system_prompt', 'You are a helpful AI assistant.');
 
+        // Add Knowledge Base Context
+        $context = get_option('ai_chatbot_llama_context', '');
+        if (!empty($context)) {
+            $system_prompt .= "\n\nCONTEXT information:\n" . $context;
+        }
+
         // Build messages array with history
         $messages = array();
 
@@ -234,6 +246,12 @@ class AI_Chatbot_Llama_API
 
         $model = get_option('ai_chatbot_llama_gemini_model', 'gemini-1.5-flash');
         $system_prompt = get_option('ai_chatbot_llama_system_prompt', 'You are a helpful AI assistant.');
+
+        // Add Knowledge Base Context
+        $context = get_option('ai_chatbot_llama_context', '');
+        if (!empty($context)) {
+            $system_prompt .= "\n\nCONTEXT information:\n" . $context;
+        }
 
         // Build conversation context
         $conversation_text = $system_prompt . "\n\n";

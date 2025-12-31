@@ -56,6 +56,19 @@
     font-size: 13px;
 }
 
+/* Tabs */
+.ai-chatbot-tab-content {
+    display: none;
+}
+
+.ai-chatbot-tab-content.active {
+    display: block;
+}
+
+.nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
 /* Toggle Switch */
 .ai-chatbot-toggle-switch {
     position: relative;

@@ -1,10 +1,8 @@
 <!-- AI Chatbot Widget -->
 <div id="ai-chatbot-widget" class="ai-chatbot-widget">
     <button id="ai-chatbot-toggle" class="ai-chatbot-toggle" aria-label="Toggle chatbot">
-        <svg class="ai-chatbot-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-        </svg>
+        <img src="<?php echo AI_CHATBOT_LLAMA_PLUGIN_URL . 'assets/images/chat-icon.jpg'; ?>"
+            class="ai-chatbot-icon ai-chatbot-custom-icon" alt="Chat" />
         <svg class="ai-chatbot-close-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -25,7 +23,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="ai-chatbot-title">AI Assistant</h3>
+                    <h3 class="ai-chatbot-title">Descartes AI</h3>
                     <p class="ai-chatbot-status">
                         <span class="ai-chatbot-status-dot"></span>
                         Online
@@ -61,7 +59,7 @@
                     </svg>
                 </div>
                 <div class="ai-chatbot-message-content">
-                    <p>Hello! I'm your AI assistant powered by Llama. How can I help you today?</p>
+                    <p>Hello! I'm Descartes AI. How can I help you today?</p>
                 </div>
             </div>
         </div>
