@@ -111,12 +111,15 @@ class AI_Chatbot_Llama_API
         ));
 
         if (is_wp_error($response)) {
+            error_log('AI Chatbot Error: ' . $response->get_error_message());
             return new WP_Error('api_error', 'Failed to connect to Ollama API: ' . $response->get_error_message());
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
         if ($response_code !== 200) {
-            return new WP_Error('api_error', 'Ollama API returned error code: ' . $response_code);
+            $body = wp_remote_retrieve_body($response);
+            error_log('AI Chatbot API Error Code: ' . $response_code . ' Body: ' . $body);
+            return new WP_Error('api_error', 'Ollama API returned error code: ' . $response_code . ' - ' . substr($body, 0, 100));
         }
 
         $body = wp_remote_retrieve_body($response);

@@ -1,0 +1,11 @@
+# Ignore node_modules in both root (if any) and local server
+node_modules/
+local-llama-server/node_modules/
+
+# Ignore the zip archive itself
+Archive.zip
+
+# Ignore system files
+.DS_Store
+
+# Optional: Ignore the local server config if it contains secrets (though it doesn't currently)
