@@ -4,7 +4,7 @@
  * Plugin URI: https://example.com/ai-chatbot-llama
  * Description: A powerful AI chatbot plugin that integrates with Llama models for intelligent conversations
  * Version: 1.0.0
- * Author: Your Name
+ * Author: Oğuzhan Acar
  * Author URI: https://example.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
