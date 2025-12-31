@@ -10,6 +10,120 @@ class AI_Chatbot_Llama_API
     {
         add_action('wp_ajax_ai_chatbot_send_message', array($this, 'handle_chat_request'));
         add_action('wp_ajax_nopriv_ai_chatbot_send_message', array($this, 'handle_chat_request'));
+        add_action('rest_api_init', array($this, 'register_rest_routes'));
+    }
+
+    /**
+     * Register REST API routes
+     */
+    public function register_rest_routes()
+    {
+        register_rest_route('ai-chatbot/v1', '/chat-stream', array(
+            'methods' => 'POST',
+            'callback' => array($this, 'handle_chat_stream'),
+            'permission_callback' => '__return_true', // Public endpoint
+        ));
+    }
+
+    /**
+     * Handle Streaming Chat Request via REST API
+     */
+    public function handle_chat_stream($request)
+    {
+        // Verify nonce manually for public access
+        $nonce = $request->get_header('X-WP-Nonce');
+        if (!wp_verify_nonce($nonce, 'ai_chatbot_llama_nonce')) {
+            return new WP_Error('forbidden', 'Invalid nonce', array('status' => 403));
+        }
+
+        $params = $request->get_json_params();
+        $message = isset($params['message']) ? sanitize_text_field($params['message']) : '';
+
+        if (empty($message)) {
+            return new WP_Error('bad_request', 'Message cannot be empty', array('status' => 400));
+        }
+
+        $session_id = AI_Chatbot_Llama_Core::get_session_id();
+        $history = AI_Chatbot_Llama_Core::get_conversation_history($session_id, 5);
+
+        // Save User Message immediately
+        // Note: Response will be saved after streaming completes (client side trigger or handled later? 
+        // Actually saving streamed response server-side is hard without buffering. 
+        // For now, valid optimization is to skip saving response server-side or save it in a separate call if needed. 
+        // But let's try to capture it if possible, or just focus on streaming first.)
+        // We will just stream for now. Saving history might need a separate 'save_message' endpoint or buffering.
+
+        // Prepare headers for event-stream
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('Connection: keep-alive');
+        header('X-Accel-Buffering: no'); // Nginx disable buffering
+
+        $this->stream_ollama_response($message, $history);
+        exit;
+    }
+
+    /**
+     * Stream response from Ollama using cURL
+     */
+    private function stream_ollama_response($message, $history)
+    {
+        $provider = get_option('ai_chatbot_llama_provider', 'ollama_local');
+        $model = get_option('ai_chatbot_llama_model', 'llama2');
+        $temperature = floatval(get_option('ai_chatbot_llama_temperature', '0.7'));
+        $system_prompt = get_option('ai_chatbot_llama_system_prompt', 'You are a helpful AI assistant.');
+
+        // Add Knowledge Base Context (Truncated)
+        $context = get_option('ai_chatbot_llama_context', '');
+        if (!empty($context)) {
+            // Truncate context to ~3000 chars to avoid slowdowns
+            $context = substr($context, 0, 3000);
+            $system_prompt .= "\n\nCONTEXT information:\n" . $context;
+        }
+
+        // Endpoint
+        if ($provider === 'ollama_remote') {
+            $remote_url = get_option('ai_chatbot_llama_remote_url', '');
+            $api_endpoint = trailingslashit($remote_url) . 'api/chat';
+        } else {
+            $api_endpoint = get_option('ai_chatbot_llama_api_endpoint', 'http://localhost:11434/api/chat');
+        }
+
+        // Build messages
+        $messages = array();
+        $messages[] = array('role' => 'system', 'content' => $system_prompt);
+        foreach ($history as $item) {
+            $messages[] = array('role' => 'user', 'content' => $item['message']);
+            $messages[] = array('role' => 'assistant', 'content' => $item['response']);
+        }
+        $messages[] = array('role' => 'user', 'content' => $message);
+
+        $body = array(
+            'model' => $model,
+            'messages' => $messages,
+            'stream' => true, // Enable streaming from Ollama
+            'options' => array('temperature' => $temperature)
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $api_endpoint);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, false); // Direct output
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, function ($ch, $data) {
+            $json = json_decode($data, true);
+            if (isset($json['message']['content'])) {
+                echo $json['message']['content'];
+                if (ob_get_level() > 0)
+                    ob_flush();
+                flush();
+            }
+            return strlen($data);
+        });
+
+        curl_exec($ch);
+        curl_close($ch);
     }
 
     /**

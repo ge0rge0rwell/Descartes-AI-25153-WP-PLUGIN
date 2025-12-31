@@ -65,6 +65,7 @@ class AI_Chatbot_Llama_Core
         wp_localize_script('ai-chatbot-llama-script', 'aiChatbotLlama', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('ai_chatbot_llama_nonce'),
+            'restUrl' => get_rest_url(null, 'ai-chatbot/v1/'),
             'primaryColor' => get_option('ai_chatbot_llama_primary_color', '#B91C1C'),
             'position' => get_option('ai_chatbot_llama_chat_position', 'bottom-right')
         ));
