@@ -60,6 +60,7 @@ class AI_Chatbot_Llama_Admin
         register_setting('ai_chatbot_llama_settings', 'ai_chatbot_llama_temperature');
         register_setting('ai_chatbot_llama_settings', 'ai_chatbot_llama_max_tokens');
         register_setting('ai_chatbot_llama_settings', 'ai_chatbot_llama_system_prompt');
+        register_setting('ai_chatbot_llama_settings', 'ai_chatbot_llama_context'); // New context setting
         register_setting('ai_chatbot_llama_settings', 'ai_chatbot_llama_chat_position');
         register_setting('ai_chatbot_llama_settings', 'ai_chatbot_llama_primary_color');
         register_setting('ai_chatbot_llama_settings', 'ai_chatbot_llama_enabled');
@@ -77,6 +78,10 @@ class AI_Chatbot_Llama_Admin
         wp_enqueue_style('wp-color-picker');
         wp_enqueue_script('wp-color-picker');
 
+        // Enqueue PDF.js for client-side parsing
+        wp_enqueue_script('pdf-js', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', array(), '3.11.174', true);
+        wp_enqueue_script('pdf-js-worker', 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js', array(), '3.11.174', true);
+
         wp_enqueue_style(
             'ai-chatbot-llama-admin',
             AI_CHATBOT_LLAMA_PLUGIN_URL . 'assets/css/admin.css',
@@ -87,14 +92,15 @@ class AI_Chatbot_Llama_Admin
         wp_enqueue_script(
             'ai-chatbot-llama-admin',
             AI_CHATBOT_LLAMA_PLUGIN_URL . 'assets/js/admin.js',
-            array('jquery', 'wp-color-picker'),
+            array('jquery', 'wp-color-picker', 'pdf-js'),
             AI_CHATBOT_LLAMA_VERSION,
             true
         );
 
         wp_localize_script('ai-chatbot-llama-admin', 'aiChatbotAdmin', array(
             'ajaxUrl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('ai_chatbot_admin_nonce')
+            'nonce' => wp_create_nonce('ai_chatbot_admin_nonce'),
+            'pdfWorkerSrc' => 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
         ));
     }
 
