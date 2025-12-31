@@ -28,8 +28,18 @@ class AI_Chatbot_Llama_API
         $session_id = AI_Chatbot_Llama_Core::get_session_id();
         $history = AI_Chatbot_Llama_Core::get_conversation_history($session_id, 5);
 
-        // Get response from Gemini
-        $response = $this->get_gemini_response($message, $history);
+        // Get selected provider
+        $provider = get_option('ai_chatbot_llama_provider', 'ollama_local');
+
+        // Get response based on provider
+        if ($provider === 'openai') {
+            $response = $this->get_openai_response($message, $history);
+        } elseif ($provider === 'gemini') {
+            $response = $this->get_gemini_response($message, $history);
+        } else {
+            // ollama_local or ollama_remote
+            $response = $this->get_ollama_response($message, $history);
+        }
 
         if (is_wp_error($response)) {
             wp_send_json_error(array('message' => $response->get_error_message()));
@@ -107,7 +117,7 @@ class AI_Chatbot_Llama_API
                 'Bypass-Tunnel-Reminder' => 'true'
             ),
             'body' => json_encode($body),
-            'timeout' => 60
+            'timeout' => 120
         ));
 
         if (is_wp_error($response)) {
@@ -284,7 +294,17 @@ class AI_Chatbot_Llama_API
      */
     public static function test_connection()
     {
-        return self::test_gemini_connection();
+        $provider = get_option('ai_chatbot_llama_provider', 'ollama_local');
+
+        if ($provider === 'openai') {
+            return self::test_openai_connection();
+        } elseif ($provider === 'gemini') {
+            return self::test_gemini_connection();
+        } elseif ($provider === 'ollama_remote') {
+            return self::test_ollama_connection(true);
+        } else {
+            return self::test_ollama_connection(false);
+        }
     }
 
     /**
